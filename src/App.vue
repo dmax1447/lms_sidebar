@@ -24,7 +24,7 @@
     </nav>
     <div>
       <input class="input" type="text" placeholder="message" v-model="message">
-      <SuperButton @click="send">send</SuperButton>
+      <SuperButton @click.native="send">send</SuperButton>
     </div>
   </div>
 </template>
@@ -43,37 +43,18 @@ export default {
         disabled: {},
         hidden: {},
       },
-      nav: [
-        {
-          path: '/courses', id: 'courses', title: 'Курсы',
-          children: [
-            {
-              path: '/courses/stat', id: 'courses|stat', title: 'Статистика',
-              children: [
-                {path: '/courses/stat/assignment', id: 'assignment', title: 'Задания',},
-                {path: '/courses/stat/quiz', id: 'courses|stat|tests', title: 'Тесты',}
-              ]
-            }
-          ]
-        },
-        {
-          path: '/tests', id: 'tests', title: 'Тесты'
-        },
-        {
-          path: '/kit', id: 'kit', title: 'Ui-kit'
-        }
-      ]
-
-
-
+      nav: []
     }
   },
   methods: {
     send() {
       emitter.emit('message', this.message)
+      this.message = ''
     }
   },
   created() {
+    console.log('root', this.$root)
+    this.nav = this.$root.nav
     emitter.on('sidebar:hide_item', (e) => {
       console.log('sidebar:hide_item', e)
       if (!Object.hasOwn(this.menu.hidden, e.id)) {
