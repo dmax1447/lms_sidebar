@@ -1,35 +1,5 @@
 <template>
   <div id="app">
-<!--    <nav>-->
-<!--      <ul>-->
-<!--        <li>-->
-<!--          <router-link to="/courses">Курсы</router-link>-->
-<!--          <ul>-->
-<!--            <li><router-link to="/courses/stat">Статистика</router-link></li>-->
-<!--            <ul>-->
-<!--              <li>-->
-<!--                <router-link-->
-<!--                    to="/courses/stat/assignment"-->
-<!--                    class="menu-link"-->
-<!--                    :class="{-->
-<!--                      disabled: menu.disabled.assignment,-->
-<!--                      hidden: menu.hidden.assignment-->
-<!--                    }"-->
-<!--                >Задания</router-link></li>-->
-<!--              <li><router-link to="/courses/stat/quiz">Тесты</router-link></li>-->
-<!--            </ul>-->
-
-<!--          </ul>-->
-<!--        </li>-->
-<!--        <li>-->
-<!--          <router-link to="/tests">Тесты</router-link>-->
-<!--        </li>-->
-<!--        <li>-->
-<!--          <router-link to="/kit">Kit</router-link>-->
-<!--        </li>-->
-<!--      </ul>-->
-<!--    </nav>-->
-<!--    <hr>-->
     <nav>
       <ul>
         <li v-for="rootLevel in nav" :key="rootLevel.id">
@@ -52,14 +22,23 @@
         </li>
       </ul>
     </nav>
+    <div>
+      <input class="input" type="text" placeholder="message" v-model="message">
+      <SuperButton @click="send">send</SuperButton>
+    </div>
   </div>
 </template>
 <script>
+import { emitter, SuperButton } from '@lms/styleguide'
 
 export default {
   name: 'App',
+  components: {
+    SuperButton
+  },
   data() {
     return {
+      message: '',
       menu: {
         disabled: {},
         hidden: {},
@@ -89,9 +68,13 @@ export default {
 
     }
   },
-
+  methods: {
+    send() {
+      emitter.emit('message', this.message)
+    }
+  },
   created() {
-    this.$root.eventBus.on('sidebar:hide_item', (e) => {
+    emitter.on('sidebar:hide_item', (e) => {
       console.log('sidebar:hide_item', e)
       if (!Object.hasOwn(this.menu.hidden, e.id)) {
         this.$set(this.menu.hidden, e.id, true)
@@ -99,7 +82,7 @@ export default {
       }
       this.menu.hidden[e.id] = !this.menu.hidden[e.id]
     })
-    this.$root.eventBus.on('sidebar:disable_item', (e) => {
+    emitter.on('sidebar:disable_item', (e) => {
       if (!Object.hasOwn(this.menu.disabled, e.id)) {
         this.$set(this.menu.disabled, e.id, true)
         return
@@ -145,4 +128,10 @@ nav {
 
   }
 }
+
+.input {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
 </style>
