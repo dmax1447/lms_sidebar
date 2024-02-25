@@ -30,6 +30,8 @@
 </template>
 <script>
 import { emitter, SuperButton } from '@lms/styleguide'
+import { routes } from '@lms/courses'
+console.log('sidebar:course_routes',routes)
 
 export default {
   name: 'App',
@@ -53,7 +55,7 @@ export default {
     }
   },
   created() {
-    console.log('root', this.$root)
+    console.log('sidebar:$root', this.$root)
     this.nav = this.$root.nav
     emitter.on('sidebar:hide_item', (e) => {
       console.log('sidebar:hide_item', e)
