@@ -3,20 +3,18 @@
     <nav>
       <ul>
         <li v-for="rootLevel in nav" :key="rootLevel.id">
-          <router-link :to="rootLevel.path">{{rootLevel.title}}</router-link>
+          <router-link v-if="rootLevel.type === 'internal'" :to="`/${rootLevel.id}`">{{rootLevel.title}}</router-link>
+          <a v-if="rootLevel.type === 'link'" :href="rootLevel.path" target="_blank">{{rootLevel.title}}</a>
+
           <ul v-if="rootLevel.children">
-            <li v-for="rootLevelChild in rootLevel.children" :key="rootLevelChild.id"><router-link to="/courses/stat">Статистика</router-link>
-              <ul v-if="rootLevelChild.children">
-                <li v-for="nestedLevelChild in rootLevelChild.children" :key="nestedLevelChild.id">
-                  <router-link
-                      :to="nestedLevelChild.path"
-                      class="menu-link"
-                      :class="{
-                      disabled: menu.disabled[nestedLevelChild.id],
-                      hidden: menu.hidden[nestedLevelChild.id]
+            <li v-for="rootLevelChild in rootLevel.children" :key="rootLevelChild.path">
+              <router-link
+                  :to="rootLevelChild.path"
+                  :class="{
+                      disabled: isNavItemDisabled({rootId: rootLevel.id, name: rootLevelChild.name}),
+                      hidden: isNavItemHidden({rootId: rootLevel.id, name: rootLevelChild.name}),
                     }"
-                  >{{ nestedLevelChild.title }}</router-link></li>
-              </ul>
+              >{{rootLevelChild.meta.title}}</router-link>
             </li>
           </ul>
         </li>
@@ -30,48 +28,58 @@
 </template>
 <script>
 import { emitter, SuperButton } from '@lms/styleguide'
-import { routes } from '@lms/courses'
-console.log('sidebar:course_routes',routes)
 
 export default {
-  name: 'App',
+  name: 'SidebarApp',
   components: {
     SuperButton
   },
   data() {
     return {
       message: '',
-      menu: {
-        disabled: {},
-        hidden: {},
+      navState: {
+        disabled: [],
+        hidden: [],
       },
-      nav: []
+      nav: [],
     }
   },
   methods: {
     send() {
       emitter.emit('message', this.message)
       this.message = ''
+    },
+    isNavItemDisabled({rootId, name}) {
+      return this.navState.disabled.some(el => el.rootId === rootId && el.name === name)
+    },
+    isNavItemHidden({rootId, name}) {
+      return this.navState.hidden.some(el => el.rootId === rootId && el.name === name)
     }
+
   },
   created() {
-    console.log('sidebar:$root', this.$root)
-    this.nav = this.$root.nav
-    emitter.on('sidebar:hide_item', (e) => {
-      console.log('sidebar:hide_item', e)
-      if (!Object.hasOwn(this.menu.hidden, e.id)) {
-        this.$set(this.menu.hidden, e.id, true)
-        return
+    emitter.on('sidebar:hide_item', ({rootId, name}) => {
+      if (this.isNavItemHidden({rootId, name})) {
+        this.navState.hidden = this.navState.hidden.filter(el => !(el.rootId === rootId && el.name === name))
+      } else {
+        this.navState.hidden.push({rootId, name})
       }
-      this.menu.hidden[e.id] = !this.menu.hidden[e.id]
     })
-    emitter.on('sidebar:disable_item', (e) => {
-      if (!Object.hasOwn(this.menu.disabled, e.id)) {
-        this.$set(this.menu.disabled, e.id, true)
-        return
+    emitter.on('sidebar:disable_item', ({rootId, name}) => {
+      if (this.isNavItemDisabled({rootId, name})) {
+        this.navState.disabled = this.navState.disabled.filter(el => !(el.rootId === rootId && el.name === name))
+      } else {
+        this.navState.disabled.push({rootId, name})
       }
-      this.menu.disabled[e.id] = !this.menu.disabled[e.id]
     })
+    this.$root.sidebarNav.subscribe((val) => {
+      this.nav = val
+    })
+  },
+  beforeDestroy() {
+    this.$root.sidebarNav.unsubscribe()
+    emitter.off('sidebar:hide_item')
+    emitter.off('sidebar:disable_item')
   }
 }
 </script>
